@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+
+<!--@@@@@@@@@@@@@@@@@@@@@@@@@@ GREEDY GREED @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@ 																																			   @@@
+@@@										ALL THIS CODE WAS MADE FOR "PROJETO FINAL FERRAMENTAS WEB"	BY							                   @@@
+@@@                                                         MARCELO RUBERTO JUNIOR                                                                 @@@
+@@@													ON JUNE/2014 - A JAVASCRIPT SINGLEPLAYER PONG												   @@@
+@@@									THIS GAME IS OPEN SOURCE, YOU CAN USE IT, MODIFY IT AND DISTRIBUTE IT										   @@@
+@@@															BUT YOU CANNOT SELL IT 				                               					   @@@
+@@@																																	you've been warned, in caps		   @@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@-->
+  
+
+<head><title>Greedy Grid's Pong Revolution</title>
+<style type="text/css">
+.button {
+	-moz-box-shadow:inset 0px 1px 2px 0px #ffffff;
+	-webkit-box-shadow:inset 0px 1px 2px 0px #ffffff;
+	box-shadow:inset 0px 1px 2px 0px #ffffff;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ededed), color-stop(1, #C9C9C9) );
+	background:-moz-linear-gradient( center top, #ededed 5%, #C9C9C9 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#C9C9C9');
+	background-color:#ededed;
+	-webkit-border-top-left-radius:0px;
+	-moz-border-radius-topleft:0px;
+	border-top-left-radius:0px;
+	-webkit-border-top-right-radius:15px;
+	-moz-border-radius-topright:15px;
+	border-top-right-radius:15px;
+	-webkit-border-bottom-right-radius:0px;
+	-moz-border-radius-bottomright:0px;
+	border-bottom-right-radius:0px;
+	-webkit-border-bottom-left-radius:15px;
+	-moz-border-radius-bottomleft:15px;
+	border-bottom-left-radius:15px;
+	text-indent:0px;
+	border:2px solid #dcdcdc;
+	display:inline-block;
+	color:#777777;
+	font-family:Segoe UI;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:30px;
+	line-height:10px;
+	width:115px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #ffffff;
+}
+.button:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #C9C9C9), color-stop(1, #ededed) );
+	background:-moz-linear-gradient( center top, #C9C9C9 5%, #ededed 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#C9C9C9', endColorstr='#ededed');
+	background-color:#C9C9C9;
+}.button:active {
+	position:relative;
+	top:1px;
+}
+.score { font-size: 40px; }
+.layout { align: center; }
+.clear { clear: both; }
+.game{ float:left; width: 800px; }
+.options{ margin-left: 850px; }
+</style>
+
+    <script type="text/javascript">
+      // Global variables.
+      var ballX = 150; // Ball x position.
+      var ballY = 150; // Ball y position.
+      var ballDX = 1.5; // Change in ball x position.
+      var ballDY = 3; // Change in ball y position.
+      var boardX = 800; // Board width.
+      var boardY = 600; // Board height.
+      var paddleX = 300; // Initial paddle location.
+      var paddleH = 15; // Paddle height.
+      var paddleD = boardY - (paddleH+15); // Paddle depth.
+      var paddleW = 150; // Paddle width.
+	  var bPaddleX = 150;
+	  var bPaddleD = 15;
+      var ctx;
+      var gameLoop; // Game loop time interval.
+	  var playerScore = 0;
+	  var aiScore = 0;
+	  var ballSpeed = 1; // To allow player to modify the speed of the ball.
+	  var bPaddleV = 6;
+
+
+      function drawGameCanvas() {
+	  
+		ballX = 150;
+		ballY = 150; 
+		ballDX = 1.5;
+        ballDY = 3;
+		paddleX = 300; 
+		bPaddleX = 150;
+
+        ctx = document.getElementById("pong").getContext("2d");
+		
+        gameLoop = setInterval(drawBall, 1);
+
+        window.addEventListener('keydown', whatKey, true);
+       
+		}
+
+      function drawBall() {
+
+        // Clear the board.
+        ctx.clearRect(0, 0, boardX, boardY);
+
+        // Fill the board.
+		var my_gradient=ctx.createLinearGradient(0,0,800,0);
+		my_gradient.addColorStop(0,"rgb(10, 10, 10)");
+		my_gradient.addColorStop(0.5,"rgb(25, 10, 10)");
+		my_gradient.addColorStop(1,"rgb(10, 10, 10)");
+		ctx.fillStyle=my_gradient;
+		ctx.fillRect(20,20,150,100);
+        ctx.beginPath();
+        ctx.rect(0, 0, boardX, boardY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw a ball.
+        ctx.fillStyle = "rgb(200, 200, 200)";
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, 15, 0, Math.PI * 2, true);
+		ctx.shadowBlur=8;
+		ctx.shadowColor="rgb(200, 200, 200)";
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw the green paddle.
+        ctx.fillStyle = "rgb(100, 200, 100)";
+        ctx.beginPath();
+        //ctx.rect(paddleX, paddleD, paddleW, paddleH); // Would draw as a normal rectangle, but I changed my mind. So here is a rounded one:
+		ctx.lineTo(paddleX + paddleW - 10, paddleD);
+		ctx.quadraticCurveTo(paddleX + paddleW, paddleD, paddleX + paddleW, paddleD + 10);
+		ctx.lineTo(paddleX + paddleW, paddleD + paddleH - 10);
+		ctx.quadraticCurveTo(paddleX + paddleW, paddleD + paddleH, paddleX + paddleW - 10, paddleD + paddleH);
+		ctx.lineTo(paddleX + 10, paddleD + paddleH);
+		ctx.quadraticCurveTo(paddleX, paddleD + paddleH, paddleX, paddleD + paddleH - 10);
+		ctx.lineTo(paddleX, paddleD + 10);
+		ctx.quadraticCurveTo(paddleX, paddleD, paddleX + 10, paddleD);
+		ctx.shadowBlur=20;
+		ctx.shadowColor="black";
+        ctx.closePath();
+        ctx.fill();
+		
+		// Draw the blue paddle
+		ctx.fillStyle = "rgb(100, 100, 200)";
+        ctx.beginPath();
+        //ctx.rect(bPaddleX, bPaddleD, paddleW, paddleH);
+		ctx.moveTo(bPaddleX + 10, bPaddleD);
+		ctx.lineTo(bPaddleX + paddleW - 10, bPaddleD);
+		ctx.quadraticCurveTo(bPaddleX + paddleW, bPaddleD, bPaddleX + paddleW, bPaddleD + 10);
+		ctx.lineTo(bPaddleX + paddleW, bPaddleD + paddleH - 10);
+		ctx.quadraticCurveTo(bPaddleX + paddleW, bPaddleD + paddleH, bPaddleX + paddleW - 10, bPaddleD + paddleH);
+		ctx.lineTo(bPaddleX + 10, bPaddleD + paddleH);
+		ctx.quadraticCurveTo(bPaddleX, bPaddleD + paddleH, bPaddleX, bPaddleD + paddleH - 10);
+		ctx.lineTo(bPaddleX, bPaddleD + 10);
+		ctx.quadraticCurveTo(bPaddleX, bPaddleD, bPaddleX + 10, bPaddleD);
+		ctx.shadowBlur=20;
+		ctx.shadowColor="black";
+        ctx.closePath();
+        ctx.fill();
+		
+
+        // Move the ball.
+        ballX += ballDX*ballSpeed;
+        ballY += ballDY*ballSpeed;
+		
+		// AI
+		
+		var willMove = Math.floor((Math.random() * 10) + 1); // Returns a number between 1 and 10.
+		
+		if(willMove < 4){ // 30% chance of doing the right movement, 70% of doing nothing at all.
+          if(ballX < bPaddleX){
+				bPaddleX = bPaddleX - bPaddleV; // Bigger numbers (on bPaddleV) make the game a lot harder. 6 (default) and the game still smooth, but if you play with the "faster" and "slower" buttons, it will become weird.
+				if (bPaddleX < 0) bPaddleX = 0;
+			}
+
+
+		  if(ballX > bPaddleX+paddleW){
+
+				bPaddleX = bPaddleX + bPaddleV;
+			if (bPaddleX > boardX - paddleW) bPaddleX = boardX - paddleW;
+			}
+		}
+
+
+        // Bounce on a left or right edge.
+        if (ballX + ballDX > boardX - 15 || ballX + ballDX < 15) ballDX = -ballDX;
+
+        // If ball hits the top
+        if (ballY + ballDY < 30){ 
+			if(ballX+15 > bPaddleX && ballX-15 < bPaddleX + paddleW)
+					ballDY = -ballDY; // Check if it has a paddle, then bounce it
+			else { // The player wins a point, otherwise.
+            clearInterval(gameLoop);
+			playerScore++;
+            alert(playerScore);
+			drawGameCanvas();
+			document.getElementById("pPoints").innerHTML="Player: "+playerScore; // Changes the Scoreboard.
+			}
+			
+		}
+        // If the ball hits the bottom, check see if it hits a paddle.
+        else if (ballY + ballDY > boardY - 30) {
+          // If the ball hits the paddle, bounce it.
+          if (ballX+10 > paddleX && ballX-10 < paddleX + paddleW) ballDY = -ballDY;
+          // Otherwise, point to AI.
+          else {
+            clearInterval(gameLoop);
+			aiScore++;
+            alert(aiScore);
+			drawGameCanvas();
+			document.getElementById("aiPoints").innerHTML="Machine: "+aiScore;
+          }
+        }
+		
+		if(playerScore == 5){ // The first who scores 5 points, win the game.
+		alert("Congrats, you won!");
+        clearInterval(gameLoop); // Stop the loop.
+		}
+		if(aiScore == 5){
+		alert("You lost!");
+        clearInterval(gameLoop);
+		}
+		
+      }
+
+      // Get key press.
+
+      function whatKey(evt) {
+
+		if(evt.keyCode == 37 || evt.keyCode == 65){ // <
+          paddleX = paddleX - 25;
+          if (paddleX < 0) paddleX = 0;
+		}
+
+		if(evt.keyCode == 39 || evt.keyCode == 68){ // >
+          paddleX = paddleX + 25;
+          if (paddleX > boardX - paddleW) paddleX = boardX - paddleW;
+		}        
+
+      }
+	  
+		function restartGame(){
+		
+        clearInterval(gameLoop);
+		ballSpeed = 1;
+		playerScore = 0;
+		aiScore = 0;
+		bPaddleV = 6;
+		document.getElementById("pPoints").innerHTML="Player: "+playerScore;
+		document.getElementById("aiPoints").innerHTML="Machine: "+aiScore;
+		drawGameCanvas();
+		
+		}
+		
+		function slowBall(){
+		if(ballSpeed > 0.1)
+			ballSpeed = ballSpeed*0.85;
+		if(bPaddle > 1)
+			bPaddleV -=1;
+		}
+		
+		function fastBall(){
+		if(ballSpeed < 2.2){
+			ballSpeed = ballSpeed*1.15;
+			bPaddleV += 2;
+		}
+		}
+
+    </script>
+  </head>
+  
+  <body onload="drawGameCanvas()"  style="background-color:#1B1B1B; color=#939393; font-family: Segoe UI; margin:30px; background:url(img/bg.jpg)">
+    <h1  style="color: rgb(200, 200, 200); font-size: 58px; font-weight: bold; text-align:center">
+      Greedy Grid's Pong Revolution!
+    </h1>
+    <div class="layout">
+		<div class="game">
+		  <canvas id="pong" width="800" height="600" style="border-width: 2px; border-style: dashed; border-color: rgb(200, 200, 200);">Make sure you have HTML 5 enabled (if you don't see the game, download Chrome)</canvas>
+		</div>
+		<div class="options">
+                <h2 style="color: rgb(200, 200, 200); font-size: 18px; font-weight: normal; text-align:left">Use the arrow keys to move the paddle. The first one to makes 5 points, wins.</h2>
+		      <p id="pPoints" class="score" style="color:rgb(100, 200, 100)">Player: 0</p>
+		      <p id="aiPoints" class="score" style="color:rgb(100, 100, 200)">Machine: 0</p>
+		      <button type="button" class="button" onclick="slowBall()" style="margin-right:20px;">Slower ball</button>
+		      <button type="button" class="button" onclick="fastBall()" style="margin-right:100px">Faster ball</button>
+  		    <button type="button" class="button" onclick="restartGame()">Try again!</button><br><br>
+		      <img src="img/logo.png" width="30%" height="30%"><h2 style="color: rgb(200, 200, 200); font-size: 18px; font-weight: normal; text-align:right">Marcelo Ruberto Junior</h2>
+            </div><div class="clear"> </div>
+      </div>
+  </body>
+    
+    
+
+</html>
